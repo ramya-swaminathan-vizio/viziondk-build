@@ -1,0 +1,104 @@
+##############################################################################
+# MediaTek (MTK) functions for conjure-build
+##############################################################################
+
+#-----------------------------------------------------------------------------
+# environment set-up
+#-----------------------------------------------------------------------------
+MTK_COMPLETE_IMG_DIR=$NDK_IMG_WORKDIR/ndk
+MTK_APP_NAME=ndk
+
+VENDOR_FILES="
+"
+#-----------------------------------------------------------------------------
+# Maksym.Shestirko added libcast_sys_info_1.0.so to final tarball
+# from the out/chromium this is dummy library, This is need because for
+# Widevine need collected information about the platform for successfully init
+# if use sys_inflo library provided from MTK this lib is not provided full
+# information, therefore widevine can't successfully initialize.
+#-----------------------------------------------------------------------------
+MTK_CHROMIUM_FILES="
+"
+
+MTK_EXTRA_FILES="
+post-install.sh
+"
+#lw app.conf
+
+#-----------------------------------------------------------------------------
+# functions expected by build.sh
+#-----------------------------------------------------------------------------
+
+build_install_img()
+{
+  img_ver=$1
+  dest_dir="$2/$TARGET"
+
+  rm -rf $dest_dir
+  mkdir -p $dest_dir
+  img=`realpath $dest_dir`/$MTK_APP_NAME.$img_ver.zip
+
+  build_base_img
+
+  # create VERSION file
+  cd $MTK_COMPLETE_IMG_DIR || die 2 "Directory '$MTK_COMPLETE_IMG_DIR' doesn't exist"
+  echo $img_ver > VERSION
+
+  # add NOTRC file for non-RC builds
+  test "$IS_RC_BUILD" != "1" && touch NOTRC
+
+  # create .zip file
+  cd $MTK_COMPLETE_IMG_DIR || die 2 "Directory '$MTK_COMPLETE_IMG_DIR' doesn't exist"
+  zip -r $img * || die 2 "zip failed to create $img"
+
+  export FINAL_IMG_FILE="$img
+ Install on TV with:
+\"LD_LIBRARY_PATH=/linux_rootfs/basic:/linux_rootfs/basic/lib:/linux_rootfs/lib /linux_rootfs/bin/miniunz -o <.zip file> -d <dest dir>\""
+}
+
+build_dev_tarball()
+{
+  dest_dir=$1
+  mkdir -p $dest_dir
+
+  build_base_img
+
+  # create tarball
+  cd $MTK_COMPLETE_IMG_DIR || die 2 "Directory '$MTK_COMPLETE_IMG_DIR' doesn't exist"
+  tar czf $dest_dir/ndk_dev.tgz *
+}
+
+#-----------------------------------------------------------------------------
+# MediaTek functions
+#-----------------------------------------------------------------------------
+
+build_base_img()
+{
+  rm -rf $MTK_COMPLETE_IMG_DIR
+  #mkdir -p $MTK_COMPLETE_IMG_DIR/lib
+  mkdir -p $MTK_COMPLETE_IMG_DIR
+  cd $MTK_COMPLETE_IMG_DIR
+
+  test -f "$NDK_SO_ROOT/"*shim*.so || die 2 "libshim_lib.so not found"
+  cp -f "$NDK_SO_ROOT/"*shim*.so .
+
+  # copy extra files
+  for f in $MTK_EXTRA_FILES
+   #echo "RAMYA value of f in build_base_img =  "$f
+  do
+    dirlist="$NDK_EXTRAS_DIR"
+    for d in $dirlist
+    do
+     echo "RAMYA value of f= and d= in build_base_img1 =  "$f $d
+      cp $d/$f . && break
+    done
+    test -f $d/$f || die 2 "Can't find file '$f' in '$dirlist'"
+  done
+
+
+  # adjust names and permissions for MTK TV
+  chmod -R 755 *
+
+  # move shared libs to ./lib
+  #mv lib*.so* ./lib
+}
