@@ -34,7 +34,6 @@ ME=$(basename $0)
 MYDIR=$(realpath $(dirname $0))
 TARGET=vs-sx7b
 MAKE_CLEAN=0
-ENABLE_CHROMIUM_DEBUG=0
 IS_DEV_BUILD=0
 IS_RC_BUILD=0
 
@@ -82,11 +81,6 @@ set_release_ver()
 {
   RELEASE_VER=$1
 
-}
-
-set_symdir()
-{
-  SYMDIR=$1
 }
 
 parse_arguments()
@@ -148,6 +142,7 @@ parse_arguments $*
 # set up platform-independent environment variables
 NDK_BUILD_ROOT=$(realpath $(dirname $0))
 NDK_ROOT=`realpath $NDK_BUILD_ROOT/..`
+NDK_EXTRAS_DIR=`realpath $NDK_BUILD_ROOT/extras`
 NDK_SO_ROOT=$NDK_ROOT/ndk-vsilicon/vendor/VS/artefacts/libs
 
 

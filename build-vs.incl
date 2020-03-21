@@ -1,139 +1,18 @@
 ##############################################################################
-# V-Silicon functions for conjure-build
+# V-Silicon functions for ndk-build
 ##############################################################################
 
 #-----------------------------------------------------------------------------
 # environment set-up
 #-----------------------------------------------------------------------------
-#VS_BUILD_DIR=$CONJURE_ROOT/build
-#VS_PREBUILT_DIR=$VS_BUILD_DIR/prebuilt
-#VS_SDK_DIR=$CONJURE_ROOT/sx7_sdk
 VS_COMPLETE_IMG_DIR=$NDK_IMG_WORKDIR/ndk
 VS_INSTALL_DIR_DRAGONFLY=./sx7a_dragonfly
 VS_INSTALL_DIR_LEO=./sx7b_leo
 VS_APP_NAME=ndk
 
-if false; then
-GN_ARGS="
-arm_float_abi=\"hard\" \
-arm_use_neon=true \
-build_fairplaystreaming_libraries=true \
-cc_wrapper=\"ccache\" \
-chromecast_branding=\"internal\" \
-debug_devtools=true \
-enable_fairplaystreaming=true \
-enable_nacl=false \
-enable_playready=true \
-enable_widevine=true \
-is_chromecast=true \
-is_clang=true \
-is_debug=false \
-is_fairplay_implemented=true \
-remove_webcore_debug_symbols=true \
-symbol_level=1 \
-target_cpu=\"arm\" \
-target_os=\"linux\" \
-toolkit_views=false \
-enable_flickering_patch=true \
-use_low_memory_buffer=false \
-"
-GN_ARGS+=" is_target_vs=true "
-fi
-
-if false; then
-VENDOR_FILES="
-dumpstate
-libFPS.so
-libchromium_graphics_1.0.so
-libchromium_media_1.0.so
-libchromium_sys_info_1.0.so
-libfps_tee.so
-fling
-"
-fi
-
-if false; then
-VS_VENDOR_FILES="
-libchromium_platform_1.0.so
-libchromium_avsettings_1.0.so
-libfps.so
-ReleaseApp.sh
-"
-fi
-
-if false; then
-VS_EXTRA_FILES="
-chromium.sh
-conjure_transition.sh
-cleanup_playready_drmfiles.sh
-mem-cpu-monitor.sh
-"
-fi
-
-if false; then
-pushd $VS_BUILD_DIR >/dev/null
-source envsetup.sh
-popd >/dev/null
-pushd $VS_SDK_DIR >/dev/null
-source Build/EnvSetup.sh
-popd >/dev/null
-
-# copy prebuilt libFPS.so to src/third_party/fairplay
-echo "== Copying libFPS.so from VS repo to third_party/fairplay"
-cp -f $VS_PREBUILT_DIR/platform/libFPS.so $CHROMIUM_ROOT/third_party/fairplay/cdm/chromecast || die 2 "Can't copy libFPS.so"
-
-# copy prebuilt libdxxrt.so.1 to src/third_party/playready
-echo "== Copying libcxxrt.so.1 from EXTRAS to third_party/playready"
-cp -f $CONJURE_EXTRAS_DIR/libcxxrt.so.1 $CHROMIUM_ROOT/third_party/playready/cdm/lib || die 2 "Can't copy libcxxrt.so.1"
-fi
-
 #-----------------------------------------------------------------------------
 # functions expected by build.sh
 #-----------------------------------------------------------------------------
-
-show_build_base()
-{
-  cd $VS_BUILD_DIR
-
-  # we expect V-Silicon build repo commit messages to look like this:
-  # V69.1: requires SX7A:6.0.19.1.SEM SX7B:2.1.9.1.SEM
-  #info=`git log HEAD^..HEAD | grep requires`
-  info=`git log | grep requires | head -n 1`
-
-  overall_ver=`echo $info | awk '{print $1}' | sed 's/://g'`
-
-  ver=`echo $info | awk '{print $3}'`
-  if echo $ver | grep -q SX7A: ; then
-     sx7a_ver=`echo $ver | awk -F : '{print $2}'`
-  elif echo $ver | grep -q SX7B: ; then
-     sx7b_ver=`echo $ver | awk -F : '{print $2}'`
-  fi
-
-  ver=`echo $info | awk '{print $4}'`
-  if echo $ver | grep -q SX7A: ; then
-     sx7a_ver=`echo $ver | awk -F : '{print $2}'`
-  elif echo $ver | grep -q SX7B: ; then
-     sx7b_ver=`echo $ver | awk -F : '{print $2}'`
-  fi
-
-  test -z "$sx7a_ver" && sx7a_ver="(none)"
-  test -z "$sx7b_ver" && sx7b_ver="(none)"
-
-  cd $CHROMIUM_ROOT/chrome
-  maj=`grep MAJOR VERSION | awk -F = '{print $2}'`
-  min=`grep MINOR VERSION | awk -F = '{print $2}'`
-  bld=`grep BUILD VERSION | awk -F = '{print $2}'`
-  patch=`grep PATCH VERSION | awk -F = '{print $2}'`
-
-  echo "   Overall version: $overall_ver"
-  if [ "$TARGET" = "vs-sx7a" ]; then
-    echo "   SX7A FW version: $sx7a_ver (dragonfly)"
-  else
-    echo "   SX7B FW version: $sx7b_ver (leo)"
-  fi
-  echo "    Chrome version: `show_chromium_version`"
-}
-
 build_install_img()
 {
   # Note: this is based on V-Silicon's CreateAppImage.sh
@@ -188,81 +67,25 @@ build_base_img()
   mkdir -p $VS_COMPLETE_IMG_DIR
   cd $VS_COMPLETE_IMG_DIR
 
- echo "RMAYA Iam in build_base_img NDK_SO_ROOT = "$NDK_SO_ROOT
-echo "RMAYA Iam in build_base_img NDK_OUT_DIR = "$NDK_OUT_DIR
+  echo "RMAYA Iam in build_base_img NDK_SO_ROOT = "$NDK_SO_ROOT
+  echo "RAMYA Iam in build_base_img VS_COMPLETE_IMG_DIR" $VS_COMPLETE_IMG_DIR
 
-echo "RAMYA Iam in build_base_img VS_COMPLETE_IMG_DIR" $VS_COMPLETE_IMG_DIR
-cp -f "$NDK_SO_ROOT/"*shim*.so .
-#cp -f "$NDK_SO_ROOT/"*shim*.so "$NDK_OUT_DIR/" 
+  test -f "$NDK_SO_ROOT/"*shim*.so || die 2 "libshim_lib.so not found"
+  cp -f "$NDK_SO_ROOT/"*shim*.so .
+  #cp -f "$NDK_SO_ROOT/"*shim*.so "$NDK_OUT_DIR/"
 
-#Ramya
-if false; then
-  # copy files and directories from chromium build
-  for f in $CHROMIUM_FILES $CHROMIUM_PAK_DIRS
-  do
-    cp -R $CHROMIUM_OUT_DIR/$f .
-  done
-
-  # copy vendor prebuilt files
-  for f in $VENDOR_FILES $VS_VENDOR_FILES $VENDOR_FILES_UNUSED
-  do
-    dirlist="$VS_PREBUILT_DIR/platform $VS_PREBUILT_DIR $VS_PREBUILT_DIR/.."
-    for d in $dirlist
-    do
-      test -f $d/$f && cp $d/$f . && break
-    done
-    test -f $f || die 2 "Can't find prebuilt file '$f' in '$dirlist'"
-  done
-
-  # copy extra files
-  for f in $EXTRA_FILES $VS_EXTRA_FILES
-  do
-    dirlist="$CONJURE_EXTRAS_DIR"
-    for d in $dirlist
-    do
-      test -f $d/$f && cp $d/$f . && break
-    done
-    test -f $d/$f || die 2 "Can't find file '$f' in '$dirlist'"
-  done
-
-  # copy xtask_fps.aload
-  select_aload
-
-  # enable chromium logging, if requested
-  if [ "$ENABLE_CHROMIUM_DEBUG" = "1" ]; then
-    test -f ./chromium.sh || die 2 "chromium.sh not found"
-    sed -i 's/^#CHROMIUM_LOGGING_FLAG/CHROMIUM_LOGGING_FLAG/g' ./chromium.sh \
-          || die 2 "Error when sed-ing chromium.sh"
-  fi
-
-  # strip files
-  for f in `find . -type f`
-  do
-    file $f | grep -q "ELF .* not stripped" && $STRIP_TOOL $f
-  done
-fi
-#Ramya
-#*****Check Permissions
-  # adjust names and permissions for VS TV
-  #chmod -R 755 *
-
-#Ramya
-if false; then
-  mv cast_shell chromium
-  mv chrome_sandbox chrome-sandbox
-  chmod 4755 chrome-sandbox
-  ln -f chromium semaphore
-  ln -s fling sfling
-fi
-#Ramya
+  # adjust permissions for VS TV
+  chmod 755 *
 
 }
 
 build_squashfs()
 {
   fs_file=$1
+
   rm -f fs_file
   cd $VS_COMPLETE_IMG_DIR
+  echo "RAMYA IAM in build_squashfs() value of $fs_file " $fs_file
   mksquashfs . $fs_file -all-root -noappend || die 2 "Can't create squashfs"
 }
 
@@ -273,20 +96,8 @@ build_img_header()
   squashfs_file=$3
   header_file=$4
 
-  # calcuate DCPSYS_SHA1
-  # ******Check whether needed 
-  # Ramya
-  if false; then
-  pushd "$VS_SDK_DIR/Application/Inc" > /dev/null
-  dcpsys_sha1=$(find Amapi/ Tplfapi/ Dslapi/ -type f \
-                 | sort -df \
-                 | xargs sha1sum \
-                 | sha1sum - \
-                 | cut -d" " -f1) || die 2 "Error generating DCPSYS_SHA1"
-  popd > /dev/null
- fi
- #Ramya
- 
+  echo "RAMYA Iam in build_img_header value of squashfs_file= "$squashfs_file
+  echo "RAMYA Iam in build_img_header value of header_file= "$header_file
   # calcuate IMG SHA1
   img_sha1=$(sha1sum $squashfs_file | cut -d" " -f1)
 
@@ -309,121 +120,4 @@ build_img_file()
 
   dd if=$header_file of=$img_file >/dev/null 2>&1
   dd if=$squashfs_file of=$img_file bs=1k seek=4 >/dev/null 2>&1
-}
-
-select_aload()
-{
-  aload=xtask_fps.aload
-
-  # if this is not a development build, copy file from VS prebuilt repo
-  if [ "$IS_DEV_BUILD" != "1" ]; then
-    echo "Release build: copying $aload from Gelato"
-    cp $VS_PREBUILT_DIR/platform/$aload $VS_COMPLETE_IMG_DIR
-    return
-  fi
-
-  # check if signed aload file still up-to-date
-  signed_aload=$aload.signed
-  test "$TARGET" == "vs-sx7a" && signed_aload=$signed_aload.SX7 \
-                              || signed_aload=$signed_aload.SX7B
-  unsigned_size=$(stat -c%s $VS_PREBUILT_DIR/platform/$aload)
-  if cmp -s -n $unsigned_size $VS_PREBUILT_DIR/platform/$aload \
-                              $CONJURE_EXTRAS_DIR/$signed_aload; then
-    echo "Development build: copying signed $aload from extras"
-    cp $CONJURE_EXTRAS_DIR/$signed_aload $VS_COMPLETE_IMG_DIR/$aload
-    return
-  fi
-
-  # generate new signed aload file
-  generate_signed_aload $aload $signed_aload
-  cp $CONJURE_EXTRAS_DIR/$signed_aload $VS_COMPLETE_IMG_DIR/$aload
-}
-
-generate_signed_aload()
-{
-  which lftp >/dev/null || die 10 "lftp not installed. Install it and retry build."
-
-  aload=$1
-  signed_aload=$2
-  echo "=== Generating new $signed_aload"
-
-  site="-p 990 54.68.189.167"
-  userpass="-u filesign,f#83#aaBcY"
-  settings="\
-set ssl:verify-certificate false;\
-set ftp:ssl-protect-data true;\
-set xfer:clobber true\
-"
-  test "$TARGET" == "vs-sx7a" && target=SX7A || target=SX7B
-  reqfile=FS_$target.txt
-  echo "$aload $signed_aload" > $reqfile
-
-  # make sure no other request is active
-  lftp -e "$settings;\
-           ls $target/$reqfile;\
-           bye" $userpass $site >/dev/null 2>&1 && die 11 "Another signing request is in progress. Retry later."
-
-  # copy request file to $target/ and aload file to $target/xfer/
-  lftp -e "$settings;\
-           cd $target;\
-           put -E $reqfile;\
-           cd xfer;\
-           put $VS_PREBUILT_DIR/platform/$aload;\
-           bye" $userpass $site >/dev/null 2>&1 || die 12 "lftp put $reqfile failed"
-
-  # poll until request file is gone or timeout
-  timeout_minutes=5
-  poll_interval_seconds=5
-  poll_count=$(( (timeout_minutes * 60) / poll_interval_seconds ))
-  lftp_cmd="lftp -e \"$settings;
-                      ls $target/$reqfile;
-                      bye\" $userpass $site >/dev/null 2>&1"
-  echo "=== Waiting up to $timeout_minutes minutes for signing to start..."
-  while [ $poll_count -gt 0 ]; do
-    eval $lftp_cmd || break;
-    echo -n .
-    sleep $poll_interval_seconds
-    poll_count=$((poll_count - 1))
-  done
-  echo
-  if eval $lftp_cmd; then
-    # clean up
-    lftp -e "$settings;\
-             rm $target/$reqfile;\
-             rm $target/xfer/$aload;\
-             bye" $userpass $site
-    die 13 "Signing server failed to process reqfile"
-  fi
-
-  # poll until signed file is present or timeout
-  timeout_minutes=3
-  poll_interval_seconds=5
-  poll_count=$(( (timeout_minutes * 60) / poll_interval_seconds ))
-  lftp_cmd="lftp -e \"$settings;
-                      cd $target/xfer;
-                      ls $signed_aload;
-                      bye\" $userpass $site >/dev/null 2>&1"
-  echo "=== Waiting up to $timeout_minutes minutes for signing to finish..."
-  while [ $poll_count -gt 0 ]; do
-    eval $lftp_cmd && break
-    echo -n .
-    sleep $poll_interval_seconds
-    poll_count=$((poll_count - 1))
-  done
-  echo
-  if ! eval $lftp_cmd; then
-    # clean up
-    lftp -e "$settings;\
-             rm $target/xfer/$aload;\
-             bye" $userpass $site
-    die 14 "Signing server failed to create signed file"
-  fi
-
-  # get file
-  lftp -e "$settings;\
-           cd $target/xfer;\
-           get -E -O $CONJURE_EXTRAS_DIR $signed_aload;\
-           rm $aload;\
-           bye" $userpass $site || die 15 "lftp get failed"
-
 }
