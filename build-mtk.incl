@@ -1,5 +1,5 @@
 ##############################################################################
-# MediaTek (MTK) functions for conjure-build
+# MediaTek (MTK) functions for ndk-build
 ##############################################################################
 
 #-----------------------------------------------------------------------------
@@ -10,20 +10,12 @@ MTK_APP_NAME=ndk
 
 VENDOR_FILES="
 "
-#-----------------------------------------------------------------------------
-# Maksym.Shestirko added libcast_sys_info_1.0.so to final tarball
-# from the out/chromium this is dummy library, This is need because for
-# Widevine need collected information about the platform for successfully init
-# if use sys_inflo library provided from MTK this lib is not provided full
-# information, therefore widevine can't successfully initialize.
-#-----------------------------------------------------------------------------
-MTK_CHROMIUM_FILES="
+MTK_APPLETV_FILES="
 "
 
 MTK_EXTRA_FILES="
 post-install.sh
 "
-#lw app.conf
 
 #-----------------------------------------------------------------------------
 # functions expected by build.sh
