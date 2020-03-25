@@ -5,10 +5,10 @@
 #-----------------------------------------------------------------------------
 # environment set-up
 #-----------------------------------------------------------------------------
-VS_COMPLETE_IMG_DIR=$NDK_IMG_WORKDIR/ndk
+VS_COMPLETE_IMG_DIR=$VIZIONDK_IMG_WORKDIR/viziondk
 VS_INSTALL_DIR_DRAGONFLY=./sx7a_dragonfly
 VS_INSTALL_DIR_LEO=./sx7b_leo
-VS_APP_NAME=ndk
+VS_APP_NAME=viziondk
 
 #-----------------------------------------------------------------------------
 # functions expected by build.sh
@@ -25,7 +25,7 @@ build_install_img()
   test "$IS_RC_BUILD" != "1" && touch NOTRC
 
   # build squashfs
-  vs_squashfs_file=$NDK_IMG_WORKDIR/ndk.squashfs
+  vs_squashfs_file=$VIZIONDK_IMG_WORKDIR/viziondk.squashfs
   build_squashfs $vs_squashfs_file
 
   test "$TARGET" = "vs-sx7b" && img_arg=leo
@@ -37,7 +37,7 @@ build_install_img()
     img=$dest_dir/$VS_INSTALL_DIR_LEO/$VS_APP_NAME.$img_ver.img
   fi
 
-  vs_img_header=$NDK_IMG_WORKDIR/img_header
+  vs_img_header=$VIZIONDK_IMG_WORKDIR/img_header
   build_img_header $img_ver $img_type $vs_squashfs_file $vs_img_header
   mkdir -p `dirname $img`
   build_img_file $vs_img_header $vs_squashfs_file $img
@@ -54,7 +54,7 @@ build_dev_tarball()
 
   # create tarball
   cd $VS_COMPLETE_IMG_DIR || die 2 "Directory '$VS_COMPLETE_IMG_DIR' doesn't exist"
-  tar czf $dest_dir/ndk_dev.tgz *
+  tar czf $dest_dir/viziondk_dev.tgz *
 }
 
 #-----------------------------------------------------------------------------
@@ -63,16 +63,18 @@ build_dev_tarball()
 
 build_base_img()
 {
+
+  echo "RAMYA Iam in build_base_img VS_COMPLETE_IMG_DIR" $VS_COMPLETE_IMG_DIR
   rm -rf $VS_COMPLETE_IMG_DIR
   mkdir -p $VS_COMPLETE_IMG_DIR
   cd $VS_COMPLETE_IMG_DIR
 
-  echo "RMAYA Iam in build_base_img NDK_SO_ROOT = "$NDK_SO_ROOT
-  echo "RAMYA Iam in build_base_img VS_COMPLETE_IMG_DIR" $VS_COMPLETE_IMG_DIR
+  echo "RMAYA Iam in build_base_img VIZIONDK_SO_ROOT = "$VIZIONDK_SO_ROOT
 
-  test -f "$NDK_SO_ROOT/"*shim*.so || die 2 "libshim_lib.so not found"
-  cp -f "$NDK_SO_ROOT/"*shim*.so .
-  #cp -f "$NDK_SO_ROOT/"*shim*.so "$NDK_OUT_DIR/"
+  echo "RAMYA Iam in build_base_img VS_COMPLETE_IMG_DIR" $VS_COMPLETE_IMG_DIR
+  test -f "$VIZIONDK_SO_ROOT/"*shim*.so || die 2 "libshim_lib.so not found"
+  cp -f "$VIZIONDK_SO_ROOT/"*shim*.so .
+  #cp -f "$VIZIONDK_SO_ROOT/"*shim*.so "$VIZIONDK_OUT_DIR/"
 
   # adjust permissions for VS TV
   chmod 755 *

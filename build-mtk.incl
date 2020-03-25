@@ -5,8 +5,8 @@
 #-----------------------------------------------------------------------------
 # environment set-up
 #-----------------------------------------------------------------------------
-MTK_COMPLETE_IMG_DIR=$NDK_IMG_WORKDIR/ndk
-MTK_APP_NAME=ndk
+MTK_COMPLETE_IMG_DIR=$VIZIONDK_IMG_WORKDIR/viziondk
+MTK_APP_NAME=viziondk
 
 VENDOR_FILES="
 "
@@ -71,14 +71,14 @@ build_base_img()
   mkdir -p $MTK_COMPLETE_IMG_DIR
   cd $MTK_COMPLETE_IMG_DIR
 
-  test -f "$NDK_SO_ROOT/"*shim*.so || die 2 "libshim_lib.so not found"
-  cp -f "$NDK_SO_ROOT/"*shim*.so .
+  test -f "$VIZIONDK_SO_ROOT/"*shim*.so || die 2 "libshim_lib.so not found"
+  cp -f "$VIZIONDK_SO_ROOT/"*shim*.so .
 
   # copy extra files
   for f in $MTK_EXTRA_FILES
    #echo "RAMYA value of f in build_base_img =  "$f
   do
-    dirlist="$NDK_EXTRAS_DIR"
+    dirlist="$VIZIONDK_EXTRAS_DIR"
     for d in $dirlist
     do
      echo "RAMYA value of f= and d= in build_base_img1 =  "$f $d
